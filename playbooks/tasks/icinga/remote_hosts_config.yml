@@ -1,0 +1,139 @@
+############### Build icinga configs ###############
+
+- name: create tmp dirs
+  file: path={{ item }} state=directory mode=775 owner=root group=root
+  with_items: ${tmp_paths} 
+  when: ansible_fqdn == "icinga.localhost"
+  tags: make_hosts
+  
+- name: create prod dirs
+  file: path={{ item }} state=directory mode=775 owner=root group=root
+  with_items: ${prod_paths} 
+  when: ansible_fqdn == "icinga.localhost"
+  tags: make_hosts
+  
+- name: cleanup tmp dir first
+  shell: rm -f {{ item }}
+  with_items:
+     - /tmp/ansible_hosts/hosts/hosts*
+     - /tmp/ansible_hosts/services/services*
+  when: ansible_fqdn == "icinga.localhost"
+  
+- name: build hosts.cfg
+  template: src=templates/etc/icinga/hosts.cfg.j2 dest=/tmp/ansible_hosts/hosts/hosts.cfg.{{ ansible_fqdn }} mode=0664 owner=root group=root
+  delegate_to: icinga.localhost
+  tags: make_hosts_templates
+
+- name: assemble hosts.cfg
+  assemble: src=/tmp/ansible_hosts/hosts dest=/tmp/ansible_hosts/hosts/hosts.cfg remote_src=True mode=664 owner=root group=root
+  when: ansible_fqdn == "icinga.localhost"
+  tags: make_hosts
+
+- name: build services
+  template: src=templates/etc/icinga/services.cfg.j2 dest=/tmp/ansible_hosts/services/services.cfg.{{ range(0,6000)|random }}.{{ ansible_fqdn }} mode=0664 owner=root group=root
+  delegate_to: icinga.localhost
+  tags: make_services
+
+- name: assemble services.cfg
+  assemble: src=/tmp/ansible_hosts/services dest=/tmp/ansible_hosts/services/services.cfg remote_src=True mode=664 owner=root group=root
+  when: ansible_fqdn == "icinga.localhost"
+  tags: make_services
+  
+- name: delete tmp individual cfg files
+  shell: rm -f {{ item }} 
+  with_items: 
+     - /tmp/ansible_hosts/hosts/hosts.cfg.*
+     - /tmp/ansible_services/services/services.cfg.*
+  when: ansible_fqdn == "icinga.localhost"
+  tags: delete_tmp_cfg
+  
+- name: create backup of conf.d
+  shell: cp -r /etc/icinga/conf.d /etc/icinga/conf.d.bak
+  when: ansible_fqdn == "icinga.localhost"
+  tags: cfg_backup
+  register: backup  
+
+- name: copy host and service configs to icinga dir
+  shell: yes | cp /tmp/ansible_hosts/hosts/hosts.cfg /tmp/ansible_hosts/services/services.cfg /etc/icinga/conf.d/ansible_hosts/
+  when: ansible_fqdn == "icinga.localhost" and backup.rc == 0
+  tags: cfg_backup
+  notify: 
+    - check icinga configs
+
+- name: copy commands
+  copy: src=files/etc/icinga/conf.d/commands.cfg dest=/etc/icinga/conf.d/commands.cfg mode=0664 owner=root group=root
+  when: ansible_fqdn == "icinga.localhost"
+  tags: commands
+  notify: 
+    - check icinga configs
+
+- name: copy timeperiods
+  copy: src=files/etc/icinga/conf.d/timeperiods.cfg dest=/etc/icinga/objects/timeperiods.cfg mode=0664 owner=root group=root
+  when: ansible_fqdn == "icinga.localhost"
+  tags: timeperiods
+  notify: 
+    - check icinga configs
+
+- name: copy contacts.cfg
+  copy: src=files/etc/icinga/conf.d/contacts.cfg dest=/etc/icinga/conf.d/contacts.cfg mode=0664 owner=root group=root
+  when: ansible_fqdn == "icinga.localhost"
+  tags: icinga_contacts
+  notify: 
+    - check icinga configs
+
+- name: copy contactgroups.cfg
+  copy: src=files/etc/icinga/conf.d/contactgroups.cfg dest=/etc/icinga/conf.d/contactgroups.cfg mode=0664 owner=root group=root
+  when: ansible_fqdn == "icinga.localhost"
+  tags: icinga_contacts
+  notify: 
+    - check icinga configs
+
+- name: copy host.templates.cfg
+  copy: src=files/etc/icinga/conf.d/host.templates.cfg dest=/etc/icinga/conf.d/host.templates.cfg mode=0664 owner=root group=root
+  when: ansible_fqdn == "icinga.localhost"
+  notify: 
+    - check icinga configs
+
+- name: copy host groups
+  template: src=templates/etc/icinga/host.groups.cfg.j2 dest=/etc/icinga/conf.d/host.group.cfg mode=0664 owner=root group=root
+  when: ansible_fqdn == "icinga.localhost"
+  tags: make_hosts_groups
+  notify: 
+    - check icinga configs
+  
+- name: copy resource file
+  copy: src=files/etc/icinga/resource.cfg dest=/etc/icinga/resource.cfg mode=0640 owner=icinga group=icinga
+  when: ansible_fqdn == "icinga.localhost"
+  notify: 
+    - check icinga configs
+  
+  
+############### Configure NRPE ###############
+
+- name: configure nrpe on each remote host (use regex grouping and negative lookahead. IP 10.0.0.8 is an example of nrpe master)
+  lineinfile: dest="/etc/nagios/nrpe.cfg" regexp='(^allowed_hosts=(([a-zA-Z0-9.]*)(?!,10\.0\.0\.8)))$' line='\1,10.0.0.8' backrefs=True state=present
+  when: ansible_fqdn != "icinga.localhost" and ansible_lsb.major_release != "5"
+  tags: config_nrpe
+
+- name: configure nrpe user on each remote host
+  lineinfile: dest="/etc/nagios/nrpe.cfg" regexp='nrpe_user=[a-z0-9_-]{3,15}$' line='nrpe_user=nagios' state=present
+  when: ansible_fqdn != "icinga.localhost" and ansible_lsb.major_release != "5"
+  tags: config_nrpe
+  
+- name: configure nrpe group on each remote host
+  lineinfile: dest="/etc/nagios/nrpe.cfg" regexp='nrpe_group=[a-z0-9_-]{3,15}$' line='nrpe_group=nagios' state=present
+  when: ansible_fqdn != "icinga.localhost" and ansible_lsb.major_release != "5"
+  tags: config_nrpe
+
+- name: copy additional nrpe commands file on each node
+  template: src=templates/etc/nrpe.d/icinga_nrpe.cfg.j2 dest=/etc/nrpe.d/icinga_nrpe.cfg mode=0644 owner=root group=root
+  when: ansible_fqdn != "icinga.localhost" and ansible_lsb.major_release != "5"
+  tags: config_nrpe_template
+
+############### Enable nrpe service ###############
+
+- name: Enable nrpe service on each host
+  service: name=nrpe state=restarted enabled=yes
+  when: ansible_fqdn != "icinga.localhost" and ansible_lsb.major_release != "5"
+  tags: config_nrpe
+

@@ -1,0 +1,50 @@
+---
+tmp_paths:
+  - /tmp/ansible_hosts/
+  - /tmp/ansible_hosts/hosts
+  - /tmp/ansible_hosts/services
+
+
+prod_paths:
+  - /etc/icinga/conf.d/ansible_hosts/
+  - /etc/icinga/conf.d/custom_hosts/
+  
+icinga_server_ssh_dir: /var/spool/icinga/.ssh
+icinga_server_ssh_known_hosts: /var/spool/icinga/.ssh/known_hosts
+icinga_server_ssh_id_rsa_path: /var/spool/icinga/.ssh/id_rsa
+icinga_server_ssh_id_rsa_pub_path: /var/spool/icinga/.ssh/id_rsa.pub
+
+icinga_server_ssh_id_rsa: "<icinga's private rsa key. you can encrypt this var file later using ansible-vault>"
+
+icinga_clients_ssh_dir: /home/icinga/.ssh
+
+inventory_path: /etc/icinga/
+
+nagios_plugins:
+  - nagios-plugins-by_ssh
+  - nagios-plugins-disk
+  - nagios-plugins-load
+  - nagios-plugins-nrpe
+  - nagios-plugins-procs
+  - nagios-plugins-openmanage
+  - nagios-plugins
+  
+nrpe_slave:
+  - nagios-nrpe
+
+nrpe_master: <icinga server ip>
+nrpe_port: 5666
+
+#use the following pattern to declare known hosts
+#ssh_known_hosts: fqdn,ip<space>fqdn,ip
+
+ssh_known_hosts: host1.domain,host1.ip host2.domain,host2.ip
+
+
+################################################# Metrics Configurations #################################################
+
+icinga_generic:
+  - { service_description: "ssh", check_command: "check_native!$USER1$/check_ssh!60!-p 22", max_check_attempts: "5", normal_check_interval: "10", retry_check_interval: "3", check_period: "24x7", notification_period: "none" }
+  - { service_description: "disk", check_command: "check_nrpe_command!check_disk", max_check_attempts: "5", normal_check_interval: "10", retry_check_interval: "3", check_period: "24x7", notification_period: "none" }
+  - { service_description: "load", check_command: "check_nrpe_command!check_load", max_check_attempts: "5", normal_check_interval: "10", retry_check_interval: "3", check_period: "24x7", notification_period: "none" }
+  - { service_description: "zombie_procs", check_command: "check_nrpe_command!check_zombie_procs", max_check_attempts: "5", normal_check_interval: "30", retry_check_interval: "3", check_period: "24x7", notification_period: "none" }

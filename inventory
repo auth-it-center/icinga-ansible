@@ -1,0 +1,9 @@
+[storage-servers]
+st01.storage
+st02.storage
+
+[icinga]
+icinga.localhost
+
+[icinga:children]
+storage-servers

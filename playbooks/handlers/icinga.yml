@@ -1,0 +1,28 @@
+- name: check icinga configs
+  shell: /etc/init.d/icinga checkconfig
+  register: icinga_chkconfig
+  ignore_errors: True
+  notify:
+    - show configuration errors if any
+    - reload icinga
+
+- name: show configuration errors if any
+  shell: /etc/init.d/icinga show-errors
+  when: icinga_chkconfig.rc != 0
+  ignore_errors: True
+  notify:
+    - if an error occurred remove the configs
+  
+- name: if an error occurred remove the configs
+  shell: rm -rf /etc/icinga/conf.d
+  when: icinga_chkconfig.rc != 0
+  notify:
+    - fall back to previous config
+    
+- name: fall back to previous config
+  shell: mv /etc/icinga/conf.d.bak /etc/icinga/conf.d
+  when: icinga_chkconfig.rc != 0
+  
+- name: reload icinga
+  shell: /etc/init.d/icinga reload
+  when: icinga_chkconfig.rc == 0

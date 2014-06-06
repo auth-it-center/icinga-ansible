@@ -1,0 +1,22 @@
+############### Configure icinga user ssh on icinga server ###############
+
+- name: Configure icinga .ssh directory on icinga server
+  file: path={{ icinga_server_ssh_dir }} owner=icinga group=icinga mode=0700 state=directory
+  tags: icinga_user_server
+
+- name: Commit private ssh key for icinga user on icinga server
+  template: src=templates/var/spool/icinga/ssh/id_rsa.j2 dest={{ icinga_server_ssh_id_rsa_path }} owner=icinga group=icinga mode=0600
+  tags: icinga_user_server
+
+- name: Commit public ssh keys for icinga user on icinga server
+  copy: src=files/var/spool/icinga/ssh/id_rsa.pub dest={{ icinga_server_ssh_id_rsa_pub_path }} owner=icinga group=icinga mode=0644
+  tags: icinga_user_server
+
+- name: Dynamically build the known_hosts file on icinga server
+  shell: ssh-keyscan -t dsa,rsa {{ ssh_known_hosts }} > {{ icinga_server_ssh_known_hosts }}
+  tags: icinga_user_server
+
+- name: Change file permissions for ssh_known_hosts
+  file: path={{ icinga_server_ssh_known_hosts }} owner=icinga group=icinga mode=644
+  tags: icinga_user_server
+

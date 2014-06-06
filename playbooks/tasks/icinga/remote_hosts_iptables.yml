@@ -1,0 +1,12 @@
+############### Configure iptables rules ###############
+
+- name: copy custom firewall rules for nrpe communications
+  template: src=templates/etc/sysconfig/iptables.nrpe.rules dest=/etc/sysconfig/iptables.nrpe.rules owner=root group=root mode=0600
+  tags: nrpe
+  when: ansible_fqdn != "icinga.localhost" and ansible_lsb.major_release == "6"
+  
+- name: configure iptables on each host ( only for Centos6 )
+  shell: /usr/sbin/lokkit -q --custom-rules=ipv4:filter:/etc/sysconfig/iptables.nrpe.rules
+  tags: nrpe
+  when: ansible_fqdn != "icinga.localhost" and ansible_lsb.major_release == "6"
+  

@@ -1,0 +1,8 @@
+define host{
+        use                             {{ icinga_host_template | default("custom-generic-host") }}
+        host_name                       {{ ansible_fqdn }}
+        alias                           {{ ansible_fqdn }}
+        address                         {{ facter_ipaddress }}
+        hostgroups                      {{ group_names|replace("[","")|replace("]","")|replace("'","") }}
+
+}

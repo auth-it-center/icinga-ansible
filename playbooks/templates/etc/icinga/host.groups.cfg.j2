@@ -1,0 +1,9 @@
+{% for hgr in groups %}
+{% set hostgroup = [] %}
+
+define hostgroup{
+        hostgroup_name                  {% do hostgroup.append( hgr ) %}{{ hostgroup|replace("[","")|replace("]","")|replace("'","") }}
+        alias                           {{ hostgroup|replace("[","")|replace("]","")|replace("'","") }}
+}
+
+{% endfor %}

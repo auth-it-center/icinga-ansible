@@ -1,0 +1,46 @@
+{# Maybe we can use jinja2 includes here instead of re-use the same piece of code but seems that it is not well wired yet with ansible. Stuck with this for now... #}
+{% if icinga_generic is defined %}
+{% for item in icinga_generic %}
+define service{
+    service_description     {{ item.service_description }}
+    host_name               {{ ansible_fqdn }}
+    check_command           {{ item.check_command }}
+    max_check_attempts      {{ item.max_check_attempts }}
+    normal_check_interval   {{ item.normal_check_interval }}
+    retry_check_interval    {{ item.retry_check_interval }}
+    check_period            {{ item.check_period }}
+    notification_period     {{ item.notification_period }}
+}
+{% endfor %}
+{% endif %}
+{% if icinga_host_specific is defined %}
+{% for item in icinga_host_specific %}
+define service{
+    service_description     {{ item.service_description }}
+    host_name               {{ ansible_fqdn }}
+    check_command           {{ item.check_command }}
+    max_check_attempts      {{ item.max_check_attempts }}
+    normal_check_interval   {{ item.normal_check_interval }}
+    retry_check_interval    {{ item.retry_check_interval }}
+    check_period            {{ item.check_period }}
+    notification_period     {{ item.notification_period }}
+}
+{% endfor %}
+{% endif %}
+{#-------------#}
+{# Below follows the declaration of icinga checks per group. Each variable follows the pattern "icinga_<group_var_file_name_in_lower_case_with_underscores>". In order to use it one has to define those variables inside the appropriate group vars file. #}
+{#-------------#}
+{% if icinga_storage_servers is defined %}
+{% for item in icinga_storage_servers %}
+define service{
+    service_description     {{ item.service_description }}
+    host_name               {{ ansible_fqdn }}
+    check_command           {{ item.check_command }}
+    max_check_attempts      {{ item.max_check_attempts }}
+    normal_check_interval   {{ item.normal_check_interval }}
+    retry_check_interval    {{ item.retry_check_interval }}
+    check_period            {{ item.check_period }}
+    notification_period     {{ item.notification_period }}
+}
+{% endfor %}
+{% endif %}

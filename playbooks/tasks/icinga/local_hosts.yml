@@ -1,0 +1,11 @@
+- name: copy custom hosts services.cfg
+  copy: src=files/etc/icinga/conf.d/custom_hosts/services.cfg dest=/etc/icinga/conf.d/custom_hosts/services.cfg mode=0644 owner=root group=root
+  tags: custom_hosts
+  notify:
+    - reload icinga
+
+- name: copy custom hosts hosts.cfg
+  copy: src=files/etc/icinga/conf.d/custom_hosts/hosts.cfg dest=/etc/icinga/conf.d/custom_hosts/hosts.cfg mode=0644 owner=root group=root
+  tags: custom_hosts
+  notify:
+    - reload icinga

@@ -1,0 +1,17 @@
+############### Configure icinga user. We need the following in order to use check_by_ssh instead on nrpe on CentOS 5 ###############
+
+- name: configure icinga user in order to use ssh instead of nrpe on centos5 machines
+  user: name=icinga shell=/bin/sh home=/home/icinga
+  when: ansible_fqdn != "icinga.localhost" and ansible_lsb.major_release == "5"
+  tags: icinga_user
+
+- name: Configure .ssh directory on centos5 machines
+  file: path=/home/icinga/.ssh owner=icinga group=icinga mode=0700 state=directory
+  when: ansible_fqdn != "icinga.localhost" and ansible_lsb.major_release == "5"
+  tags: icinga_user
+
+- name: Commit ssh keys for icinga user on centos5 machines
+  copy: src=files/var/spool/icinga/ssh/id_rsa.pub dest=/home/icinga/.ssh/authorized_keys owner=icinga group=icinga mode=0600
+  when: ansible_fqdn != "icinga.localhost" and ansible_lsb.major_release == "5"
+  tags: icinga_user
+  

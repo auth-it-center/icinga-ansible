@@ -1,0 +1,11 @@
+- hosts: icinga.localhost
+  user: ansible
+  sudo: True
+  vars_files:
+    - vars/distros/{{ ansible_distribution }}-{{ ansible_lsb.major_release }}.yml
+  tasks:
+    - include: tasks/icinga/local_hosts.yml
+    - include: tasks/icinga/local_host_ssh_config.yml   tags=icinga_ssh_config
+
+  handlers:
+    - include: handlers/icinga.yml
