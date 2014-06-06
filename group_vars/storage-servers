@@ -1,0 +1,5 @@
+icinga_storage_servers:
+  - { service_description: "check_dell_storage", check_command: "check_nrpe_command!check_dell_storage", max_check_attempts: "5", normal_check_interval: "10", retry_check_interval: "3", check_period: "24x7", notification_period: "none" }
+  - { service_description: "check_dell_fans", check_command: "check_nrpe_command!check_dell_fans", max_check_attempts: "5", normal_check_interval: "10", retry_check_interval: "3", check_period: "24x7", notification_period: "none" }
+  - { service_description: "check_dell_memory", check_command: "check_nrpe_command!check_dell_memory", max_check_attempts: "5", normal_check_interval: "10", retry_check_interval: "3", check_period: "24x7", notification_period: "none" }
+  - { service_description: "check_dell_power", check_command: "check_nrpe_command!check_dell_power", max_check_attempts: "5", normal_check_interval: "10", retry_check_interval: "3", check_period: "24x7", notification_period: "none" }
